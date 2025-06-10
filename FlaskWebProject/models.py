@@ -56,12 +56,17 @@ class Post(db.Model):
             fileextension = filename.rsplit('.', 1)[1]
             Randomfilename = id_generator()
             filename = Randomfilename + '.' + fileextension
-            try:
-                blob_service.create_blob_from_stream(blob_container, filename, file)
-                if self.image_path:
-                    blob_service.delete_blob(blob_container, self.image_path)
-            except Exception as e:
-                flash(f"Error al subir imagen: {str(e)}")
+
+        try:
+            blob_service.create_blob_from_stream(blob_container, filename, file)
+            if self.image_path:
+                try:
+                    blob_service.delete_blob(blob_container, self.image_path)
+                except AzureMissingResourceHttpError:
+                    pass  # El blob no existe, lo ignoramos
+        except Exception as e:
+            flash(f"Error al subir imagen: {str(e)}")
+
             self.image_path = filename
 
         if new:
