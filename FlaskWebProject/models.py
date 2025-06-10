@@ -6,7 +6,6 @@ from azure.storage.blob import BlockBlobService
 import string, random
 from werkzeug.utils import secure_filename
 from flask import flash
-from azure.common import AzureMissingResourceHttpError  
 
 blob_container = app.config['BLOB_CONTAINER']
 blob_service = BlockBlobService(account_name=app.config['BLOB_ACCOUNT'], account_key=app.config['BLOB_STORAGE_KEY'])
@@ -53,23 +52,17 @@ class Post(db.Model):
         self.user_id = userId
 
         if file:
-            filename = secure_filename(file.filename)
-            fileextension = filename.rsplit('.', 1)[1]
-            Randomfilename = id_generator()
-            filename = Randomfilename + '.' + fileextension
-
-        try:
-            blob_service.create_blob_from_stream(blob_container, filename, file)
-            if self.image_path:
-                try:
-                    blob_service.delete_blob(blob_container, self.image_path)
-                except AzureMissingResourceHttpError:
-                    pass  # El blob no existe, lo ignoramos
-        except Exception as e:
-            flash(f"Error al subir imagen: {str(e)}")
-
-            self.image_path = filename
-
+            filename = secure_filename(file.filename);
+            fileextension = filename.rsplit('.',1)[1];
+            Randomfilename = id_generator();
+            filename = Randomfilename + '.' + fileextension;
+            try:
+                blob_service.create_blob_from_stream(blob_container, filename, file)
+                if(self.image_path):
+                    blob_service.delete_blob(blob_container, self.image_path)
+            except Exception:
+                flash(Exception)
+            self.image_path =  filename
         if new:
             db.session.add(self)
         db.session.commit()
